@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@layer base {
+  html, body, #app {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #f8fafc;
+  }
+}
+
+@layer components {
+  .vue-flow__node {
+    @apply border-2 border-gray-300 rounded-lg shadow-sm bg-white;
+  }
+  
+  .vue-flow__node.selected {
+    @apply border-blue-500 shadow-lg;
+  }
+  
+  .vue-flow__edge-path {
+    @apply stroke-gray-400;
+  }
+  
+  .vue-flow__edge.selected .vue-flow__edge-path {
+    @apply stroke-blue-500;
+  }
+}
