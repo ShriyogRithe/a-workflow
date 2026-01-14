@@ -13,7 +13,6 @@
     ]"
     @click="handleNodeClick"
     @contextmenu.prevent="showContextMenu = true"
-    @mousedown="handleMouseDown"
   >
     <!-- Header -->
     <div 
@@ -237,43 +236,7 @@ const showExecutionResults = ref(false)
 
 // Event handlers
 const handleNodeClick = (event: MouseEvent) => {
-  // Only emit select if not dragging
-  if (!isDragging.value) {
-    emit('select', props.id)
-  }
-}
-
-const isDragging = ref(false)
-let dragStartTime = 0
-
-const handleMouseDown = (event: MouseEvent) => {
-  dragStartTime = Date.now()
-  isDragging.value = false
-  
-  const handleMouseMove = () => {
-    // If mouse moves after mousedown, consider it dragging
-    isDragging.value = true
-  }
-  
-  const handleMouseUp = () => {
-    // If it was a quick click without much movement, consider it a click
-    const clickDuration = Date.now() - dragStartTime
-    if (clickDuration < 200 && !isDragging.value) {
-      // This was a click, not a drag
-      emit('select', props.id)
-    }
-    
-    // Reset dragging state after a short delay
-    setTimeout(() => {
-      isDragging.value = false
-    }, 100)
-    
-    document.removeEventListener('mousemove', handleMouseMove)
-    document.removeEventListener('mouseup', handleMouseUp)
-  }
-  
-  document.addEventListener('mousemove', handleMouseMove)
-  document.addEventListener('mouseup', handleMouseUp)
+  emit('select', props.id)
 }
 
 // Icon mapping
