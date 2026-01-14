@@ -43,6 +43,7 @@
             :key="nodeConfig.type"
             :draggable="true"
             @dragstart="onDragStart($event, nodeConfig)"
+            @dblclick="onDoubleClick(nodeConfig)"
             class="p-3 border border-gray-200 rounded-lg cursor-grab active:cursor-grabbing hover:border-blue-300 hover:bg-blue-50 transition-colors group"
           >
             <div class="flex items-start gap-3">
@@ -95,12 +96,15 @@ import {
   ArrowPathRoundedSquareIcon
 } from '@heroicons/vue/24/outline'
 import { getNodesByCategory } from '@/config/nodeTypes'
+import { useWorkflowStore } from '@/stores/workflow'
+import { NodeType } from '@/types'
 import type { NodeTypeConfig } from '@/types'
 
 const searchQuery = ref('')
 const collapsedCategories = ref<string[]>([])
 
 const nodesByCategory = getNodesByCategory()
+const workflowStore = useWorkflowStore()
 
 // Icon mapping
 const iconMap = {
@@ -147,6 +151,15 @@ const toggleCategory = (category: string) => {
   } else {
     collapsedCategories.value.push(category)
   }
+}
+
+const onDoubleClick = (nodeConfig: NodeTypeConfig) => {
+  // Add node to center of canvas for testing
+  const position = { x: 300, y: 200 }
+  workflowStore.addNode(nodeConfig.type as NodeType, position, {
+    label: nodeConfig.label,
+    description: nodeConfig.description,
+  })
 }
 
 const onDragStart = (event: DragEvent, nodeConfig: NodeTypeConfig) => {

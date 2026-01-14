@@ -1,6 +1,23 @@
-# workflow-builder
+# Workflow Builder
 
-This template should help get you started developing with Vue 3 in Vite.
+A powerful visual workflow builder application built with Vue 3, TypeScript, and VueFlow. Create, edit, and execute complex workflows with an intuitive drag-and-drop interface.
+
+## 🎬 Demo
+
+Here's a quick demo of the Workflow Builder in action:
+
+https://drive.google.com/file/d/1eG650i8WDBDZSsO6BZVtVEH0LMmemRQJ/view?usp=sharing
+
+## ✨ Features
+
+- **Visual Workflow Editor**: Drag-and-drop interface for building workflows
+- **Multiple Node Types**: Triggers, actions, conditions, and more
+- **Real-time Execution**: Execute workflows and see results instantly  
+- **Node Configuration**: Customize each node with specific settings
+- **Workflow Persistence**: Save and load your workflows
+- **Responsive Design**: Works on desktop and tablet devices
+
+## 🚀 Quick Start
 
 ## Recommended IDE Setup
 
