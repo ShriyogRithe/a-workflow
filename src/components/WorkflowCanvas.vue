@@ -201,7 +201,8 @@ const {
   removeNodes,
   removeEdges,
   updateNode,
-  updateEdge
+  updateEdge,
+  project
 } = useVueFlow()
 
 const isDragging = ref(false)
@@ -307,6 +308,7 @@ const onConnect = (connection: Connection) => {
 
 // Handle drop events (from palette)
 const onDrop = (event: DragEvent) => {
+  event.preventDefault()
   isDragging.value = false
   
   if (!event.dataTransfer) return
@@ -316,15 +318,27 @@ const onDrop = (event: DragEvent) => {
   
   try {
     const data = JSON.parse(nodeTypeData)
-    const position = {
-      x: event.offsetX,
-      y: event.offsetY,
+    
+    // Get the canvas element bounds
+    const canvasRect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+    
+    // Calculate relative position within the canvas
+    let position = {
+      x: event.clientX - canvasRect.left,
+      y: event.clientY - canvasRect.top
+    }
+    
+    // If project function is available, use it to convert to flow coordinates
+    if (project) {
+      position = project(position)
     }
     
     workflowStore.addNode(data.type as NodeType, position, {
       label: data.label,
       description: data.description,
     })
+    
+    console.log('Node added:', data.type, 'at position:', position)
   } catch (error) {
     console.error('Failed to parse dropped node data:', error)
   }
@@ -332,9 +346,24 @@ const onDrop = (event: DragEvent) => {
 
 const onDragOver = (event: DragEvent) => {
   event.preventDefault()
+  event.stopPropagation()
+  
   isDragging.value = true
+  
   if (event.dataTransfer) {
     event.dataTransfer.dropEffect = 'copy'
+  }
+}
+
+// Handle drag leave to hide overlay
+const onDragLeave = (event: DragEvent) => {
+  // Only hide overlay if leaving the canvas entirely
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = event.clientX
+  const y = event.clientY
+  
+  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    isDragging.value = false
   }
 }
 
