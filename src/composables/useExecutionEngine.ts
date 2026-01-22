@@ -12,55 +12,6 @@ export function useExecutionEngine() {
   // Simulate execution delay
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-  // Topological sort to determine execution order
-  const getExecutionOrder = (workflow: Workflow): string[] => {
-    const nodes = workflow.nodes
-    const edges = workflow.edges
-    const inDegree: Record<string, number> = {}
-    const graph: Record<string, string[]> = {}
-
-    // Initialize
-    nodes.forEach(node => {
-      inDegree[node.id] = 0
-      graph[node.id] = []
-    })
-
-    // Build graph and calculate in-degrees
-    edges.forEach(edge => {
-      graph[edge.source].push(edge.target)
-      inDegree[edge.target]++
-    })
-
-    // Find nodes with no dependencies (triggers)
-    const queue: string[] = []
-    nodes.forEach(node => {
-      if (inDegree[node.id] === 0) {
-        queue.push(node.id)
-      }
-    })
-
-    const result: string[] = []
-
-    // Process nodes in topological order
-    while (queue.length > 0) {
-      const nodeId = queue.shift()!
-      result.push(nodeId)
-
-      graph[nodeId].forEach(neighbor => {
-        inDegree[neighbor]--
-        if (inDegree[neighbor] === 0) {
-          queue.push(neighbor)
-        }
-      })
-    }
-
-    // Check for cycles
-    if (result.length !== nodes.length) {
-      throw new Error('Workflow contains cycles')
-    }
-
-    return result
-  }
 
   // Execute individual node
   const executeNode = async (node: WorkflowNode, context: ExecutionContext): Promise<ExecutionResult> => {
@@ -128,7 +79,7 @@ export function useExecutionEngine() {
   }
 
   // Node execution implementations
-  const executeManualTrigger = async (node: WorkflowNode, context: ExecutionContext) => {
+  const executeManualTrigger = async (node: WorkflowNode, _context: ExecutionContext) => {
     return {
       triggered: true,
       timestamp: new Date().toISOString(),
@@ -136,7 +87,7 @@ export function useExecutionEngine() {
     }
   }
 
-  const executeWebhookTrigger = async (node: WorkflowNode, context: ExecutionContext) => {
+  const executeWebhookTrigger = async (node: WorkflowNode, _context: ExecutionContext) => {
     const config = node.data.config
     return {
       triggered: true,
@@ -147,7 +98,7 @@ export function useExecutionEngine() {
     }
   }
 
-  const executeHttpRequest = async (node: WorkflowNode, context: ExecutionContext) => {
+  const executeHttpRequest = async (node: WorkflowNode, _context: ExecutionContext) => {
     const config = node.data.config
     
     // Check for empty or invalid URL
@@ -271,7 +222,7 @@ export function useExecutionEngine() {
     return {}
   }
 
-  const executeEmail = async (node: WorkflowNode, context: ExecutionContext) => {
+  const executeEmail = async (node: WorkflowNode, _context: ExecutionContext) => {
     const config = node.data.config
     
     try {
@@ -355,7 +306,7 @@ export function useExecutionEngine() {
     }
   }
 
-  const executeSms = async (node: WorkflowNode, context: ExecutionContext) => {
+  const executeSms = async (node: WorkflowNode, _context: ExecutionContext) => {
     const config = node.data.config
     
     try {
@@ -415,105 +366,8 @@ export function useExecutionEngine() {
     }
   }
 
-  // Twilio SMS implementation
-  const sendTwilioSms = async (to: string, message: string, from: string, apiKey: string, apiSecret: string, logs: string[]) => {
-    const accountSid = apiKey
-    const authToken = apiSecret
-    
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
-    
-    const body = new URLSearchParams({
-      To: to,
-      From: from,
-      Body: message
-    })
-    
-    logs.push(`Making Twilio API request to ${url}`)
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(`${accountSid}:${authToken}`)}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: body.toString()
-    })
-    
-    const responseData = await response.json()
-    
-    if (!response.ok) {
-      logs.push(`Twilio API error: ${JSON.stringify(responseData)}`)
-      throw new Error(`Twilio API error: ${responseData.message || 'Unknown error'}`)
-    }
-    
-    logs.push(`Twilio response: ${JSON.stringify(responseData)}`)
-    
-    return {
-      sent: true,
-      provider: 'twilio',
-      to: to,
-      message: message,
-      messageId: responseData.sid,
-      status: responseData.status,
-      timestamp: new Date().toISOString(),
-      cost: responseData.price,
-      response: responseData
-    }
-  }
 
-  // AWS SNS implementation
-  const sendAwsSns = async (to: string, message: string, accessKeyId: string, secretAccessKey: string, logs: string[]) => {
-    // AWS SNS implementation would go here
-    logs.push('AWS SNS integration not implemented yet')
-    throw new Error('AWS SNS integration not implemented yet. Please use Twilio or ClickSend.')
-  }
-
-  // ClickSend implementation
-  const sendClickSendSms = async (to: string, message: string, username: string, apiKey: string, logs: string[]) => {
-    const url = 'https://rest.clicksend.com/v3/sms/send'
-    
-    const payload = {
-      messages: [{
-        to: to,
-        body: message,
-        source: 'workflow'
-      }]
-    }
-    
-    logs.push(`Making ClickSend API request to ${url}`)
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(`${username}:${apiKey}`)}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    })
-    
-    const responseData = await response.json()
-    
-    if (!response.ok) {
-      logs.push(`ClickSend API error: ${JSON.stringify(responseData)}`)
-      throw new Error(`ClickSend API error: ${responseData.response_msg || 'Unknown error'}`)
-    }
-    
-    logs.push(`ClickSend response: ${JSON.stringify(responseData)}`)
-    
-    return {
-      sent: true,
-      provider: 'clicksend',
-      to: to,
-      message: message,
-      messageId: responseData.data.messages[0]?.message_id,
-      status: responseData.data.messages[0]?.status,
-      timestamp: new Date().toISOString(),
-      cost: responseData.data.total_cost,
-      response: responseData
-    }
-  }
-
-  const executeDelay = async (node: WorkflowNode, context: ExecutionContext) => {
+  const executeDelay = async (node: WorkflowNode, _context: ExecutionContext) => {
     const config = node.data.config
     const duration = config.duration || 1
     const unit = config.unit || 'seconds'
